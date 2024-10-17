@@ -134,7 +134,7 @@ def upload_blob(bucket_name, source_file_name, destination_blob_name):
     blob.upload_from_filename(
         source_file_name, 
         if_generation_match=generation_match_precondition,
-        timeout=600
+        timeout=600  # avoid TimeoutError
     )
 
     print(
