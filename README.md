@@ -15,12 +15,12 @@
     
 ## Project Structure
 
-![alt text](docs/project-structure.png)
-
-- `load_data.py` - download and upload data
-- `bucket.py` - create bucket on cloud storage
-- `serviceKeyGoogle.json` - authentication file
+- gcs - working with Google Cloud Storage
+    - `load_data.py` - download and upload data
+    - `bucket.py` - create bucket on cloud storage
+    - `serviceKeyGoogle.json` - authentication file
 
 ## Run
 
+    cd gcs
     py main.py
