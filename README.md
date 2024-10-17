@@ -2,16 +2,19 @@
 
 ## Prerequisite
 
-- Account with Google Cloud Platform
+- Account with Google Cloud Platform, Billing enabled
 - Create service Account with owner access 
     - id: `dodat-224`
     - Go to manage keys and create `serviceKeyGoogle.json` key, store in this directory  (put in .gitignore)
+- Enable APIs
+    - Cloud Dataproc API
 - Python libraries
     - requests
     - bs4
     - os
     - urllib3
     - google-cloud
+    - google-cloud-dataproc
     
 ## Project Structure
 
