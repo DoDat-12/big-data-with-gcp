@@ -20,30 +20,48 @@ def create_cluster(project_id, region, cluster_name):
     )
 
     # Create the cluster config.
-    # TODO: config for avoiding quota & subnetwork error
+    # TODO: config for avoiding quota & subnetwork error - solved
     cluster = {
         "project_id": project_id,
         "cluster_name": cluster_name,
         "config": {
             "master_config": {
                 "num_instances": 1, 
-                "machine_type_uri": "n2-standard-2"
+                "machine_type_uri": "n2-standard-2",
+                "disk_config": {
+                    "boot_disk_size_gb": 50
+                },
             },
             "worker_config": {
                 "num_instances": 2, 
-                "machine_type_uri": "n2-standard-2"
+                "machine_type_uri": "n2-standard-2",
+                "disk_config": {
+                    "boot_disk_size_gb": 50
+                },
+            },
+            "gce_cluster_config": {
+                "internal_ip_only": False,
             },
         },
     }
 
-    # Create the cluster.
-    operation = cluster_client.create_cluster(
-        request={"project_id": project_id, "region": region, "cluster": cluster}
-    )
-    result = operation.result()
- 
-    # Output a success message.
-    print(f"Cluster created successfully: {result.cluster_name}")
+    try:
+        cluster_client.get_cluster(
+            project_id=project_id,
+            region=region,
+            cluster_name=cluster_name
+        )
+        print(f"Cluster {cluster_name} already exists.")
+    except:
+        print(f"Creating cluster {cluster_name}")
+        # Create the cluster.
+        operation = cluster_client.create_cluster(
+            request={"project_id": project_id, "region": region, "cluster": cluster}
+        )
+        result = operation.result()
+    
+        # Output a success message.
+        print(f"Cluster created successfully: {result.cluster_name}")
 
 
 def update_cluster(project_id, region, cluster_name, new_num_instances):
