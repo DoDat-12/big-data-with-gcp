@@ -8,13 +8,14 @@
     - Go to manage keys and create `serviceKeyGoogle.json` key, store in this directory  (put in .gitignore)
 - Enable APIs
     - Cloud Dataproc API
+- Set up virtual environment
+
+        py -m venv env
+        ./env/Scripts/activate
+
 - Python libraries
-    - requests
-    - bs4
-    - os
-    - urllib3
-    - google-cloud
-    - google-cloud-dataproc
+    
+        pip install -r requirements.txt
     
 ## Project Structure
 
