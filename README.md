@@ -2,16 +2,20 @@
 
 ## Prerequisite
 
-- Account with Google Cloud Platform
+- Account with Google Cloud Platform, Billing enabled
 - Create service Account with owner access 
     - id: `dodat-224`
     - Go to manage keys and create `serviceKeyGoogle.json` key, store in this directory  (put in .gitignore)
+- Enable APIs
+    - Cloud Dataproc API
+- Set up virtual environment
+
+        py -m venv env
+        ./env/Scripts/activate
+
 - Python libraries
-    - requests
-    - bs4
-    - os
-    - urllib3
-    - google-cloud
+    
+        pip install -r requirements.txt
     
 ## Project Structure
 
@@ -22,5 +26,14 @@
 
 ## Run
 
+Creating Google Cloud Storage for storing Raw Data
+
     cd gcs
     py main.py
+
+Manage Google Dataproc Cluster for Spark
+
+    cd dataproc
+    py main.py
+
+> pip freeze > requirements.txt
