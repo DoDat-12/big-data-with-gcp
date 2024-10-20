@@ -10,9 +10,8 @@ def create_cluster(project_id, region, cluster_name):
         cluster_name (string): Name to use for creating a cluster.
     """
 
-    # set up authenticate to GCS
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '../serviceKeyGoogle.json'
-
+    # set up authentication
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "../serviceKeyGoogle.json"
 
     # Create a client with the endpoint set to the desired cluster region.
     cluster_client = dataproc.ClusterControllerClient(
@@ -26,18 +25,14 @@ def create_cluster(project_id, region, cluster_name):
         "cluster_name": cluster_name,
         "config": {
             "master_config": {
-                "num_instances": 1, 
+                "num_instances": 1,
                 "machine_type_uri": "n2-standard-2",
-                "disk_config": {
-                    "boot_disk_size_gb": 50
-                },
+                "disk_config": {"boot_disk_size_gb": 50},
             },
             "worker_config": {
-                "num_instances": 2, 
+                "num_instances": 2,
                 "machine_type_uri": "n2-standard-2",
-                "disk_config": {
-                    "boot_disk_size_gb": 50
-                },
+                "disk_config": {"boot_disk_size_gb": 50},
             },
             "gce_cluster_config": {
                 "internal_ip_only": False,
@@ -47,9 +42,7 @@ def create_cluster(project_id, region, cluster_name):
 
     try:
         cluster_client.get_cluster(
-            project_id=project_id,
-            region=region,
-            cluster_name=cluster_name
+            project_id=project_id, region=region, cluster_name=cluster_name
         )
         print(f"Cluster {cluster_name} already exists.")
     except:
@@ -59,7 +52,7 @@ def create_cluster(project_id, region, cluster_name):
             request={"project_id": project_id, "region": region, "cluster": cluster}
         )
         result = operation.result()
-    
+
         # Output a success message.
         print(f"Cluster created successfully: {result.cluster_name}")
 
@@ -67,14 +60,14 @@ def create_cluster(project_id, region, cluster_name):
 def update_cluster(project_id, region, cluster_name, new_num_instances):
     """Updating a Cloud Dataproc cluster
     Args:
-        project_id (str): Project to use for creating resources.
-        region (str): Region where the resources should live.
-        cluster_name (str): Name to use for creating a cluster.
+        project_id (str): Project ID that contains cluster.
+        region (str): Region where the resources live.
+        cluster_name (str): Cluster's name.
+        new_num_instances (int): Number of instances
     """
 
-    # set up authenticate to GCS
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '../serviceKeyGoogle.json'
-
+    # set up authentication
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "../serviceKeyGoogle.json"
 
     # Create a client with the endpoint set to the desired cluster region.
     client = dataproc.ClusterControllerClient(
@@ -104,6 +97,94 @@ def update_cluster(project_id, region, cluster_name, new_num_instances):
     # Output a success message.
     updated_cluster = operation.result()
     print(f"Cluster was updated successfully: {updated_cluster.cluster_name}")
+
+
+def delete_cluster(project_id, region, cluster_name):
+    """Delete a Cloud Dataproc cluster
+    Args:
+        project_id (str): Project ID that contains cluster.
+        region (str): Region where the resources live.
+        cluster_name (str): Cluster's name for deleting.
+    """
+
+    # Set up authentication
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "../serviceKeyGoogle.json"
+
+    # Create a client with the endpoint set to the desired cluster region.
+    client = dataproc.ClusterControllerClient(
+        client_options={"api_endpoint": f"{region}-dataproc.googleapis.com:443"}
+    )
+
+    operation = client.delete_cluster(
+        # Using DeleteClusterRequest
+        request={
+            "project_id": project_id,
+            "region": region,
+            "cluster_name": cluster_name,
+        }
+    )
+    operation.result()
+    print(f"Cluster {cluster_name} successfully deleted")
+
+
+def start_cluster(project_id, region, cluster_name):
+    """Start a Cloud Dataproc cluster
+    Args:
+        project_id (str): Project ID that contains cluster.
+        region (str): Region where the resources live.
+        cluster_name (str): Cluster's name for starting.
+    """
+
+    # Set up authentication
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "../serviceKeyGoogle.json"
+
+    # Create a client with the endpoint set to the desired cluster region.
+    client = dataproc.ClusterControllerClient(
+        client_options={"api_endpoint": f"{region}-dataproc.googleapis.com:443"}
+    )
+
+    # Operation to start cluster
+    operation = client.start_cluster(
+        # Using StartClusterRequest
+        request={
+            "project_id": project_id,
+            "region": region,
+            "cluster_name": cluster_name,
+        }
+    )
+    print(f"Starting cluster {cluster_name}...")
+    operation.result()
+    print(f"Cluster {cluster_name} started successully")
+
+
+def stop_cluster(project_id, region, cluster_name):
+    """Stop a Cloud Dataproc Cluster
+    Args:
+        project_id (str): Project ID that contains cluster.
+        region (str): Region where the resources live.
+        cluster_name (str): Name of a cluster that need to be stopped.
+    """
+
+    # Set up authentication
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "../serviceKeyGoogle.json"
+
+    # Create a client with the endpoint set to the desired cluster region.
+    client = dataproc.ClusterControllerClient(
+        client_options={"api_endpoint": f"{region}-dataproc.googleapis.com:443"}
+    )
+
+    # Operation to stop cluster
+    operation = client.stop_cluster(
+        # Using StopClusterRequest
+        request={
+            "project_id": project_id,
+            "region": region,
+            "cluster_name": cluster_name,
+        }
+    )
+    print(f"Stopping cluster {cluster_name}...")
+    operation.result()
+    print(f"Cluster {cluster_name} stopped successfully")
 
 
 # information

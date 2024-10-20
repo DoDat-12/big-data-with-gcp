@@ -31,7 +31,9 @@ Creating Google Cloud Storage for storing Raw Data
     cd gcs
     py main.py
 
-Create Google Dataproc Cluster for Spark
+Manage Google Dataproc Cluster for Spark
 
     cd dataproc
     py main.py
+
+> pip freeze > requirements.txt
