@@ -18,7 +18,9 @@ def create_cluster(project_id, region, cluster_name):
 
     # Create a client with the endpoint set to the desired cluster region.
     cluster_client = dataproc.ClusterControllerClient(
-        client_options={"api_endpoint": f"{region}-dataproc.googleapis.com:443"}
+        client_options={
+            "api_endpoint": f"{region}-dataproc.googleapis.com:443"
+        }
     )
 
     # Create the cluster config.
@@ -52,7 +54,11 @@ def create_cluster(project_id, region, cluster_name):
         print(f"Creating cluster {cluster_name}")
         # Create the cluster.
         operation = cluster_client.create_cluster(
-            request={"project_id": project_id, "region": region, "cluster": cluster}
+            request={
+                "project_id": project_id,
+                "region": region,
+                "cluster": cluster
+            }
         )
         result = operation.result()
 
@@ -74,7 +80,9 @@ def update_cluster(project_id, region, cluster_name, new_num_instances):
 
     # Create a client with the endpoint set to the desired cluster region.
     client = dataproc.ClusterControllerClient(
-        client_options={"api_endpoint": f"{region}-dataproc.googleapis.com:443"}
+        client_options={
+            "api_endpoint": f"{region}-dataproc.googleapis.com:443"
+        }
     )
 
     # Get cluster you wish to update.
@@ -83,7 +91,11 @@ def update_cluster(project_id, region, cluster_name, new_num_instances):
     )
 
     # Update number of clusters
-    mask = {"paths": {"config.worker_config.num_instances": str(new_num_instances)}}
+    mask = {
+        "paths": {
+            "config.worker_config.num_instances": str(new_num_instances)
+        }
+    }
 
     # Update cluster config
     cluster.config.worker_config.num_instances = new_num_instances
@@ -115,7 +127,9 @@ def delete_cluster(project_id, region, cluster_name):
 
     # Create a client with the endpoint set to the desired cluster region.
     client = dataproc.ClusterControllerClient(
-        client_options={"api_endpoint": f"{region}-dataproc.googleapis.com:443"}
+        client_options={
+            "api_endpoint": f"{region}-dataproc.googleapis.com:443"
+        }
     )
 
     operation = client.delete_cluster(
@@ -144,7 +158,9 @@ def start_cluster(project_id, region, cluster_name):
 
     # Create a client with the endpoint set to the desired cluster region.
     client = dataproc.ClusterControllerClient(
-        client_options={"api_endpoint": f"{region}-dataproc.googleapis.com:443"}
+        client_options={
+            "api_endpoint": f"{region}-dataproc.googleapis.com:443"
+        }
     )
 
     # Operation to start cluster
@@ -174,7 +190,9 @@ def stop_cluster(project_id, region, cluster_name):
 
     # Create a client with the endpoint set to the desired cluster region.
     client = dataproc.ClusterControllerClient(
-        client_options={"api_endpoint": f"{region}-dataproc.googleapis.com:443"}
+        client_options={
+            "api_endpoint": f"{region}-dataproc.googleapis.com:443"
+        }
     )
 
     # Operation to stop cluster
@@ -205,7 +223,9 @@ def submit_pyspark_job(project_id, region, cluster_name, gcs_bucket, spark_filen
 
     # Create the job client
     job_client = dataproc.JobControllerClient(
-        client_options={"api_endpoint": f"{region}-dataproc.googleapis.com:443"}
+        client_options={
+            "api_endpoint": f"{region}-dataproc.googleapis.com:443"
+        }
     )
 
     # Create the job config - Class Job (5.13.0)
@@ -225,7 +245,9 @@ def submit_pyspark_job(project_id, region, cluster_name, gcs_bucket, spark_filen
             "job": job,
         }
     )
+    print("Job submmiting...")
     response = operation.result()
+    print("Job running...")
 
     # Dataproc job output is saved to the Cloud Storage bucket
     # allocated to the job. Use regex to obtain the bucket and blob info.
