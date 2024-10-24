@@ -7,7 +7,9 @@
     - id: `dodat-224`
     - Go to manage keys and create `serviceKeyGoogle.json` key, store in this directory  (put in .gitignore)
 - Enable APIs
+    - Compute Engine API
     - Cloud Dataproc API
+    - Cloud Resource Manager API
 - Set up virtual environment
 
         py -m venv env
