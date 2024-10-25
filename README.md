@@ -28,7 +28,7 @@
 
 ## Run
 
-Creating Google Cloud Storage for storing Raw Data
+Creating Google Cloud Storage for storing Raw Data (bỏ qua)
 
     cd gcs
     py main.py

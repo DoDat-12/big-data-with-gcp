@@ -14,20 +14,20 @@ def main():
     cluster_name = "uber-spark"
 
     # Create cluster
-    # create_cluster(
-    #     project_id=project_id,
-    #     region=region,
-    #     cluster_name=cluster_name
-    # )
+    create_cluster(
+        project_id=project_id,
+        region=region,
+        cluster_name=cluster_name
+    )
 
     # Submit PySpark Job
-    # submit_pyspark_job(
-    #     project_id=project_id,
-    #     region=region,
-    #     cluster_name=cluster_name,
-    #     gcs_bucket="uber-parquet",
-    #     spark_filename="gcs_test.py",
-    # )
+    submit_pyspark_job(
+        project_id=project_id,
+        region=region,
+        cluster_name=cluster_name,
+        gcs_bucket="uber-parquet",
+        spark_filename="gcs_test.py",
+    )
 
     # Stop cluster
     stop_cluster(
