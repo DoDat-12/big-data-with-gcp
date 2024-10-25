@@ -10,7 +10,7 @@ from cluster import (
 def main():
     # Cluster information
     project_id = "uber-big-data-439701"
-    region = "asia-east1"
+    region = "us-central1"
     cluster_name = "uber-cluster"
 
     # Create cluster

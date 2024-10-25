@@ -5,7 +5,7 @@ spark = SparkSession \
     .appName("Test") \
     .getOrCreate()
 
-input_path = "gs://uber-parquet/yellow_tripdata_2024-01.parquet"
+input_path = "gs://parquet-uber/yellow_tripdata_2024-01.parquet"
 
 df = spark.read.option("header", True) \
     .parquet(input_path)
