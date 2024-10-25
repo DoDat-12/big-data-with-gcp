@@ -9,9 +9,9 @@ from cluster import (
 
 def main():
     # Cluster information
-    project_id = "symbolic-button-438810-n5"
-    region = "us-central1"
-    cluster_name = "uber-spark"
+    project_id = "uber-big-data-439701"
+    region = "asia-east1"
+    cluster_name = "uber-cluster"
 
     # Create cluster
     create_cluster(
@@ -25,7 +25,7 @@ def main():
         project_id=project_id,
         region=region,
         cluster_name=cluster_name,
-        gcs_bucket="uber-parquet",
+        gcs_bucket="parquet-uber",
         spark_filename="gcs_test.py",
     )
 

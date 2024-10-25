@@ -18,24 +18,9 @@
 - Python libraries
     
         pip install -r requirements.txt
-    
-## Project Structure
 
-- gcs - working with Google Cloud Storage
-    - `load_data.py` - download and upload data
-    - `bucket.py` - create bucket on cloud storage
-    - `serviceKeyGoogle.json` - authentication file
+- Test run
 
-## Run
-
-Creating Google Cloud Storage for storing Raw Data (bỏ qua)
-
-    cd gcs
-    py main.py
-
-Manage Google Dataproc Cluster for Spark
-
-    cd dataproc
-    py main.py
+        py setup_test.py
 
 > pip freeze > requirements.txt
