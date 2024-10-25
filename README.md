@@ -19,6 +19,8 @@
     
         pip install -r requirements.txt
 
+- Download Service Account Key from docs
+
 - Test run
 
         py setup_test.py
