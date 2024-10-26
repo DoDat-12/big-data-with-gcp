@@ -1,8 +1,11 @@
-import requests
 import os
+import requests
 import urllib.request
 
+from pathlib import Path
 from bs4 import BeautifulSoup
+from google.cloud import storage
+from google.cloud.storage import Client, transfer_manager
 
 
 def download_files():
@@ -15,7 +18,7 @@ def download_files():
         count = 0
         soup = BeautifulSoup(response.text, 'html.parser')
         links = soup.find_all('a', title='Yellow Taxi Trip Records')
-        
+
         for link in links:
             # test with one parquet file
             if count == 1:
@@ -30,6 +33,19 @@ def download_files():
     else:
         print(f"Error: {response.status_code}")
         return False
+
+
+def upload_files(bucket_name, source_directory):
+    file_paths = []
+    for root, _, files in os.walk(source_directory):
+        for file in files:
+            file_paths.append(os.path.join(root, file).replace("\\", "/"))
+    for file_path in file_paths:
+        upload_blob(
+            bucket_name=bucket_name,
+            source_file_name=file_path,
+            destination_blob_name=file_path.split('/')[-1]
+        )
 
 
 def upload_directory_with_transfer_manager(bucket_name, source_directory, workers=8):
@@ -56,9 +72,6 @@ def upload_directory_with_transfer_manager(bucket_name, source_directory, worker
     # of processes by passing `worker_type=transfer_manager.THREAD`.
     # workers=8
 
-    from pathlib import Path
-    from google.cloud.storage import Client, transfer_manager
-
     # set up authenticate to GCS
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '../serviceKeyGoogle.json'
 
@@ -78,7 +91,9 @@ def upload_directory_with_transfer_manager(bucket_name, source_directory, worker
 
     # These paths are relative to the current working directory. Next, make them
     # relative to `directory`
-    relative_paths = [path.relative_to(source_directory) for path in file_paths]
+    relative_paths = [
+        path.relative_to(source_directory) for path in file_paths
+    ]
 
     # Finally, convert them all to strings.
     string_paths = [str(path) for path in relative_paths]
@@ -88,10 +103,10 @@ def upload_directory_with_transfer_manager(bucket_name, source_directory, worker
     # Start the upload.
     print(f"Uploading files to bucket {bucket_name}...")
     results = transfer_manager.upload_many_from_filenames(
-        bucket, string_paths, 
-        source_directory=source_directory, 
-        max_workers=workers, 
-        skip_if_exists=True, 
+        bucket, string_paths,
+        source_directory=source_directory,
+        max_workers=workers,
+        skip_if_exists=True,
         deadline=None  # avoid TimeError
     )
 
@@ -103,9 +118,6 @@ def upload_directory_with_transfer_manager(bucket_name, source_directory, worker
             print("Failed to upload {} due to exception: {}".format(name, result))
         else:
             print("Uploaded {} to {}.".format(name, bucket.name))
-
-
-from google.cloud import storage
 
 
 def upload_blob(bucket_name, source_file_name, destination_blob_name):
@@ -132,15 +144,14 @@ def upload_blob(bucket_name, source_file_name, destination_blob_name):
     print(f'Uploading {source_file_name}...')
 
     blob.upload_from_filename(
-        source_file_name, 
+        source_file_name,
         if_generation_match=generation_match_precondition,
         timeout=600  # avoid TimeoutError
     )
 
     print(
-        f"File {source_file_name} uploaded to {destination_blob_name}."
+        f"File {source_file_name} uploaded to bucket {bucket_name}"
     )
-
 
 
 # information

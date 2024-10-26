@@ -47,7 +47,9 @@ def create_cluster(project_id, region, cluster_name):
 
     try:
         cluster_client.get_cluster(
-            project_id=project_id, region=region, cluster_name=cluster_name
+            project_id=project_id,
+            region=region,
+            cluster_name=cluster_name
         )
         print(f"Cluster {cluster_name} already exists.")
     except:
@@ -87,7 +89,9 @@ def update_cluster(project_id, region, cluster_name, new_num_instances):
 
     # Get cluster you wish to update.
     cluster = client.get_cluster(
-        project_id=project_id, region=region, cluster_name=cluster_name
+        project_id=project_id,
+        region=region,
+        cluster_name=cluster_name
     )
 
     # Update number of clusters
@@ -245,7 +249,7 @@ def submit_pyspark_job(project_id, region, cluster_name, gcs_bucket, spark_filen
             "job": job,
         }
     )
-    print("Job submmiting...")
+    print(f"Job {spark_filename} submmiting...")
     response = operation.result()
     print("Job running...")
 

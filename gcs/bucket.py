@@ -1,6 +1,7 @@
 import os
 from google.cloud import storage
 
+
 def create_bucket_class_location(bucket_name):
     """Create a new bucket in the US region with the standard storage class."""
     # bucket_name = 'your-bucket-name'
@@ -15,8 +16,11 @@ def create_bucket_class_location(bucket_name):
         return bucket
     else:
         bucket.storage_class = 'STANDARD'
-        new_bucket = storage_client.create_bucket(bucket, location='us')
-        
+        new_bucket = storage_client.create_bucket(
+            bucket,
+            location='us'
+        )
+
         print(
             "Created bucket {} in {} with storage class {}".format(
                 new_bucket.name, new_bucket.location, new_bucket.storage_class

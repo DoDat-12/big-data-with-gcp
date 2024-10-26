@@ -1,3 +1,7 @@
+"""
+Test if Dataproc is working fine
+"""
+
 from pyspark.sql import SparkSession
 
 print("What's up motherf*cker")

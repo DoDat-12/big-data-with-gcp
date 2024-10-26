@@ -8,26 +8,29 @@ from cluster import (
 
 
 def main():
-    # Cluster information
-    project_id = "uber-big-data-439701"
+    # Cluster & job information
+    project_id = "uber-analysis-439804"
     region = "us-central1"
-    cluster_name = "uber-cluster"
+    cluster_name = "uber-hadoop-spark-cluster"
+    gcs_bucket = "uber-pyspark-jobs"
+    spark_file_name = "warehouse_loader_v4.py"
+    # gs://uber-pyspark-jobs/warehouse_loader_v1.py
 
     # Create cluster
-    create_cluster(
-        project_id=project_id,
-        region=region,
-        cluster_name=cluster_name
-    )
+    # create_cluster(
+    #     project_id=project_id,
+    #     region=region,
+    #     cluster_name=cluster_name
+    # )
 
     # Submit PySpark Job
-    submit_pyspark_job(
-        project_id=project_id,
-        region=region,
-        cluster_name=cluster_name,
-        gcs_bucket="parquet-uber",
-        spark_filename="gcs_test.py",
-    )
+    # submit_pyspark_job(
+    #     project_id=project_id,
+    #     region=region,
+    #     cluster_name=cluster_name,
+    #     gcs_bucket=gcs_bucket,
+    #     spark_filename=spark_file_name,
+    # )
 
     # Stop cluster
     stop_cluster(
@@ -35,9 +38,6 @@ def main():
         region=region,
         cluster_name=cluster_name
     )
-
-    # Start cluster
-    # start_cluster(project_id=project_id, region=region, cluster_name=cluster_name)
 
     # Delete cluster
     delete_cluster(

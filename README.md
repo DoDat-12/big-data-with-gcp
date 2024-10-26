@@ -1,12 +1,14 @@
 # Experimenting GCP for Big Data Project 
 
+![alt text](docs/pipeline.png)
+
 ## Prerequisite
 
-- Account with Google Cloud Platform, Billing enabled
-- Create service Account with owner access 
-    - id: `dodat-224`
+- Account with Google Cloud Platform, Billing enabled (Skip)
+- Create service Account with owner access (Skip)
+    - id: `tadod-sa-434`
     - Go to manage keys and create `serviceKeyGoogle.json` key, store in this directory  (put in .gitignore)
-- Enable APIs
+- Enable APIs (Skip)
     - Compute Engine API
     - Cloud Dataproc API
     - Cloud Resource Manager API
@@ -19,11 +21,35 @@
     
         pip install -r requirements.txt
 
-- Download Service Account Key from docs
-
+- Create Service Account with owner role, create key and save with name `serviceKeyGoogle.json`
 
 - Test run
 
         py setup_test.py
+
+## Project Structure
+
+- `gcs`
+    - `bucket.py` - function to create bucket on Google Cloud Storage
+    - `load_data.py` - functions to download data and upload to bucket on GCS
+    - `main.py` - execution file
+
+- `dataproc`
+    - `cluster.py` - functions to manage dataproc cluster (create, update, delete, start, stop, submit job)
+    - `main.py` - execution file
+    - `jobs` - contains PySpark jobs
+
+- `bigquery`
+
+- `docs` - files for README.md
+- `setup_test.py` - check authen from local to GCP
+- `serviceKeyGoogle.json` - Service Account key for authentication
+
+## Project Infomation
+
+- Project ID: `uber-analysis-439804`
+- Region: `us-central1`
+- Dataproc's Cluster Name: `uber-hadoop-spark-cluster`
+- Bucket's Name: `uber-datalake`
 
 > pip freeze > requirements.txt
