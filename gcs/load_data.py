@@ -15,19 +15,19 @@ def download_files():
     response = requests.get(page_url)
 
     if response.status_code == 200:
-        count = 0
+        # count = 0
         soup = BeautifulSoup(response.text, 'html.parser')
         links = soup.find_all('a', title='Yellow Taxi Trip Records')
 
         for link in links:
             # test with one parquet file
-            if count == 1:
-                break
+            # if count == 1:
+            #     break
             link_url = link.get('href')
             file_name = os.path.join(download_dir, link_url.split('/')[-1])
             print(f'downloading {link_url.split('/')[-1]}...')
             urllib.request.urlretrieve(url=link_url, filename=file_name)
-            count += 1
+            # count += 1
             print(f'downloaded {link_url.split('/')[-1]}')
         return True
     else:
@@ -143,11 +143,14 @@ def upload_blob(bucket_name, source_file_name, destination_blob_name):
 
     print(f'Uploading {source_file_name}...')
 
-    blob.upload_from_filename(
-        source_file_name,
-        if_generation_match=generation_match_precondition,
-        timeout=600  # avoid TimeoutError
-    )
+    try:
+        blob.upload_from_filename(
+            filename=source_file_name,
+            if_generation_match=generation_match_precondition,
+            timeout=6000  # avoid TimeoutError
+        )
+    except:
+        print(f"{source_file_name} already uploaded")
 
     print(
         f"File {source_file_name} uploaded to bucket {bucket_name}"

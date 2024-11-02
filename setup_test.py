@@ -13,6 +13,10 @@ def list_buckets():
         print("Buckets in your GCP project:")
         for bucket in buckets:
             print(bucket.name)
+            blobs = client.list_blobs(bucket_or_name=bucket)
+            for blob in blobs:
+                print(f"\t{blob.name}")
+
     except Exception as e:
         print(f"Error accessing GCP: {e}")
 
