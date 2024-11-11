@@ -213,7 +213,7 @@ def stop_cluster(project_id, region, cluster_name):
     print(f"Cluster {cluster_name} stopped successfully")
 
 
-def submit_pyspark_job(project_id, region, cluster_name, gcs_bucket, spark_filename):
+def submit_pyspark_job(project_id, region, cluster_name, gcs_bucket, spark_filename, args=None):
     """Submit PySpark Job to cluster
     Args:
         project_id (str): Project ID that contains cluster.
@@ -238,6 +238,7 @@ def submit_pyspark_job(project_id, region, cluster_name, gcs_bucket, spark_filen
         "pyspark_job": {
             # Class PySparkJob (5.13.0)
             "main_python_file_uri": f"gs://{gcs_bucket}/{spark_filename}",
+            "args": args,
         },
     }
 
@@ -247,17 +248,17 @@ def submit_pyspark_job(project_id, region, cluster_name, gcs_bucket, spark_filen
             "project_id": project_id,
             "region": region,
             "job": job,
-        }
+        },
+        timeout=None,
     )
     print(f"Job {spark_filename} submmiting...")
-    response = operation.result()
+    response = operation.result(timeout=None)
     print("Job running...")
 
     # Dataproc job output is saved to the Cloud Storage bucket
     # allocated to the job. Use regex to obtain the bucket and blob info.
     matches = re.match("gs://(.*?)/(.*)", response.driver_output_resource_uri)
 
-    # TODO: Check what is this
     output = (
         storage.Client()
         .get_bucket(matches.group(1))

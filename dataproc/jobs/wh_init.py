@@ -5,12 +5,13 @@ from pyspark.sql.types import *
 
 spark = SparkSession \
     .builder \
-    .appName("Test access raw bucket") \
+    .appName("Batch Process Each Year") \
     .getOrCreate()
 
-input_path = "gs://uber-lake-yellow"
+input_path = f"gs://uber-2011-154055"
 zone_lookup = "gs://uber-pyspark-jobs/taxi_zone_lookup.csv"
 
+# raw schema
 schema = StructType([
     StructField("VendorID", LongType(), True),
     StructField("tpep_pickup_datetime", TimestampNTZType(), True),
@@ -35,9 +36,9 @@ df = spark \
     .read \
     .format("parquet") \
     .load(input_path) \
-    .distinct() \
     .dropna() \
     .withColumn("trip_id", monotonically_increasing_id())
+df.printSchema()
 
 lookup_schema = StructType([
     StructField("LocationID", IntegerType(), True),
@@ -46,8 +47,6 @@ lookup_schema = StructType([
     StructField("service_zone", StringType(), True),
 ])
 
-df.printSchema()
-
 df_lookup = spark \
     .read \
     .format("csv") \
@@ -55,10 +54,7 @@ df_lookup = spark \
     .option("header", True) \
     .load(zone_lookup) \
     .dropna()
-
 df_lookup.printSchema()
-
-# df.show()
 
 # Datetime dimension
 dim_datetime = df \
@@ -76,8 +72,6 @@ dim_datetime = df \
     .withColumn("drop_year", year(col("tpep_dropoff_datetime"))) \
     .withColumn("drop_weekday", dayofweek(col("tpep_dropoff_datetime")))
 
-# dim_datetime.show(5)
-
 # Rate code dimension
 rate_code_type = {
     1: "Standard rate",
@@ -87,7 +81,7 @@ rate_code_type = {
     5: "Negotiated fare",
     6: "Group ride",
 }
-
+# RatecodeID + rate_code_name
 dim_rate_code = df \
     .select("RatecodeID") \
     .distinct() \
@@ -100,28 +94,23 @@ dim_rate_code = df \
                  .when(F.col("RatecodeID") == 6, rate_code_type[6])
                  .otherwise(None)
                 ) \
-    .dropna() \
-    .withColumn("rate_code_id", monotonically_increasing_id())
-
-# dim_rate_code.show(5)
+    .dropna()
 
 # Pickup location dimension
+# PULocationID + Borough + Zone + service_zone
 dim_pickup_location = df \
     .select("PULocationID") \
     .distinct() \
     .join(df_lookup, df.PULocationID == df_lookup.LocationID, "inner") \
-    .select("PULocationID", "Borough", "Zone", "service_zone") \
-    .withColumn("pickup_location_id", monotonically_increasing_id())
-
-# dim_pickup_location.show(5)
+    .select("PULocationID", "Borough", "Zone", "service_zone")
 
 # Dropoff location dimension
+# DOLocationID + Borough + Zone + service_zone
 dim_dropoff_location = df \
     .select("DOLocationID") \
     .distinct() \
     .join(df_lookup, df.DOLocationID == df_lookup.LocationID, "inner") \
-    .select("DOLocationID", "Borough", "Zone", "service_zone") \
-    .withColumn("dropoff_location_id", monotonically_increasing_id())
+    .select("DOLocationID", "Borough", "Zone", "service_zone")
 
 # dim_dropoff_location.show(5)
 
@@ -134,7 +123,7 @@ payment_type_name = {
     5: "Unknown",
     6: "Voided trip",
 }
-
+# payment_type + payment_type_name
 dim_payment = df \
     .select("payment_type") \
     .distinct() \
@@ -147,17 +136,14 @@ dim_payment = df \
                  .when(F.col("payment_type") == 6, payment_type_name[6])
                  .otherwise(None)
                 ) \
-    .dropna() \
-    .withColumn("payment_type_id", monotonically_increasing_id())
-
-# dim_payment.show(5)
+    .dropna()
 
 # Vendor dimension
 vendor_name = {
     1: "Create Mobile Technologies, LLC",
     2: "VeriFone Inc",
 }
-
+# VendorID + vendor_name
 dim_vendor = df \
     .select("VendorID") \
     .distinct() \
@@ -166,40 +152,39 @@ dim_vendor = df \
                  .when(F.col("VendorID") == 2, vendor_name[2])
                  .otherwise(None)
                 ) \
-    .dropna() \
-    .withColumn("vendor_id", monotonically_increasing_id())
-
-# dim_vendor.show(5)
+    .dropna()
 
 # Fact table
-fact_trip = df \
-    .join(dim_vendor, df.VendorID == dim_vendor.VendorID, "inner") \
-    .join(dim_datetime, (df.tpep_pickup_datetime == dim_datetime.tpep_pickup_datetime) & (df.tpep_dropoff_datetime == dim_datetime.tpep_dropoff_datetime), "inner") \
-    .join(dim_pickup_location, df.PULocationID == dim_pickup_location.PULocationID, "inner") \
-    .join(dim_dropoff_location, df.DOLocationID == dim_dropoff_location.DOLocationID, "inner") \
-    .join(dim_rate_code, df.RatecodeID == dim_rate_code.RatecodeID, "inner") \
-    .join(dim_payment, df.payment_type == dim_payment.payment_type, "inner") \
+fact_trip = df.alias("fact_data") \
+    .join(dim_vendor.alias("dim_vendor"), col("fact_data.VendorID") == col("dim_vendor.VendorID"), "inner") \
+    .join(dim_datetime.alias("dim_datetime"), (col("fact_data.tpep_pickup_datetime") == col("dim_datetime.tpep_pickup_datetime")) & (
+        col("fact_data.tpep_dropoff_datetime") == col("dim_datetime.tpep_dropoff_datetime")), "inner") \
+    .join(dim_pickup_location.alias("dim_pickup_location"), col("fact_data.PULocationID") == col("dim_pickup_location.PULocationID"), "inner") \
+    .join(dim_dropoff_location.alias("dim_dropoff_location"), col("fact_data.DOLocationID") == col("dim_dropoff_location.DOLocationID"), "inner") \
+    .join(dim_rate_code.alias("dim_ratecode"), col("fact_data.RatecodeID") == col("dim_ratecode.RatecodeID"), "inner") \
+    .join(dim_payment.alias("dim_payment"), col("fact_data.payment_type") == col("dim_payment.payment_type"), "inner") \
     .select(
-        df.trip_id,
-        dim_vendor.vendor_id,
-        dim_datetime.datetime_id,
-        dim_pickup_location.pickup_location_id,
-        dim_dropoff_location.dropoff_location_id,
-        dim_rate_code.rate_code_id,
-        dim_payment.payment_type_id,
-        df.passenger_count,
-        df.trip_distance,
-        df.fare_amount,
-        df.extra,
-        df.mta_tax,
-        df.tip_amount,
-        df.tolls_amount,
-        df.total_amount,
+        col("fact_data.trip_id"),
+        col("dim_vendor.VendorID").alias("vendor_id"),
+        col("dim_datetime.datetime_id").alias("datetimestamp_id"),
+        col("dim_pickup_location.PULocationID").alias("pu_location_id"),
+        col("dim_dropoff_location.DOLocationID").alias("do_location_id"),
+        col("dim_ratecode.RatecodeID").alias("ratecode_id"),
+        col("dim_payment.payment_type").alias("payment_id"),
+        col("fact_data.passenger_count"),
+        col("fact_data.trip_distance"),
+        col("fact_data.fare_amount"),
+        col("fact_data.extra"),
+        col("fact_data.mta_tax"),
+        col("fact_data.tip_amount"),
+        col("fact_data.tolls_amount"),
+        col("fact_data.total_amount")
         # delete cause of version conflict
         # df.congestion_surcharge,
         # df.Airport_fee,
         # df.improvement_surcharge,
-    )
+)
+
 
 # fact_trip.show(5)
 
