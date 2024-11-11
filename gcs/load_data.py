@@ -1,6 +1,8 @@
 import os
+import re
 import requests
 import urllib.request
+import pandas as pd
 
 from pathlib import Path
 from bs4 import BeautifulSoup
@@ -8,9 +10,9 @@ from google.cloud import storage
 from google.cloud.storage import Client, transfer_manager
 
 
-def download_files():
+def download_yellow_files():
     page_url = 'https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page'
-    download_dir = './data/'
+    download_dir = './yellow/'
     os.makedirs(download_dir, exist_ok=True)
     response = requests.get(page_url)
 
@@ -24,11 +26,118 @@ def download_files():
             # if count == 1:
             #     break
             link_url = link.get('href')
-            file_name = os.path.join(download_dir, link_url.split('/')[-1])
-            print(f'downloading {link_url.split('/')[-1]}...')
-            urllib.request.urlretrieve(url=link_url, filename=file_name)
-            # count += 1
-            print(f'downloaded {link_url.split('/')[-1]}')
+
+            if match := re.search(r'yellow_tripdata_(\d{4})-', link_url):
+                year = int(match.group(1))
+                if year > 2010:
+                    file_name = os.path.join(
+                        download_dir,
+                        link_url.split('/')[-1]
+                    )
+                    print(f'downloading {link_url.split('/')[-1]}...')
+                    urllib.request.urlretrieve(
+                        url=link_url,
+                        filename=file_name
+                    )
+                    # count += 1
+                    print(f'downloaded {link_url.split('/')[-1]}')
+                    preprocess(file_name)
+        return True
+    else:
+        print(f"Error: {response.status_code}")
+        return False
+
+
+def preprocess(file_path):
+    try:
+        df = pd.read_parquet(file_path)
+        columns = [
+            "VendorID",
+            "tpep_pickup_datetime",
+            "tpep_dropoff_datetime",
+            "passenger_count",
+            "trip_distance",
+            "RatecodeID",
+            "store_and_fwd_flag",
+            "PULocationID",
+            "DOLocationID",
+            "payment_type",
+            "fare_amount",
+            "extra",
+            "mta_tax",
+            "tip_amount",
+            "tolls_amount",
+            "total_amount",
+        ]
+
+        df_filtered = df[columns]
+        df_filtered = df_filtered.dropna()
+
+        # Cast columns to appropriate types
+        df_filtered["VendorID"] = df_filtered["VendorID"] \
+            .astype("int64")
+        df_filtered["passenger_count"] = df_filtered["passenger_count"] \
+            .astype("int64")
+        df_filtered["trip_distance"] = df_filtered["trip_distance"] \
+            .astype("float64")
+        df_filtered["RatecodeID"] = df_filtered["RatecodeID"] \
+            .astype("int64")
+        df_filtered["PULocationID"] = df_filtered["PULocationID"] \
+            .astype("int64")
+        df_filtered["DOLocationID"] = df_filtered["DOLocationID"] \
+            .astype("int64")
+        df_filtered["payment_type"] = df_filtered["payment_type"] \
+            .astype("int64")
+        df_filtered["fare_amount"] = df_filtered["fare_amount"] \
+            .astype("float64")
+        df_filtered["extra"] = df_filtered["extra"] \
+            .astype("float64")
+        df_filtered["mta_tax"] = df_filtered["mta_tax"] \
+            .astype("float64")
+        df_filtered["tip_amount"] = df_filtered["tip_amount"] \
+            .astype("float64")
+        df_filtered["tolls_amount"] = df_filtered["tolls_amount"] \
+            .astype("float64")
+        df_filtered["total_amount"] = df_filtered["total_amount"] \
+            .astype("float64")
+
+        df_filtered.to_parquet(file_path, index=False)
+        print(f"{file_path} preprocessed successfully")
+    except Exception as e:
+        print(f"Failed to processed {file_path}: {e}")
+
+
+def download_green_files():
+    page_url = 'https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page'
+    download_dir = './green/'
+    os.makedirs(download_dir, exist_ok=True)
+    response = requests.get(page_url)
+
+    if response.status_code == 200:
+        # count = 0
+        soup = BeautifulSoup(response.text, 'html.parser')
+        links = soup.find_all('a', title='Green Taxi Trip Records')
+
+        for link in links:
+            # test with one parquet file
+            # if count == 1:
+            #     break
+            link_url = link.get('href')
+
+            if match := re.search(r'green_tripdata_(\d{4})-', link_url):
+                year = int(match.group(1))
+                if year > 2010:
+                    file_name = os.path.join(
+                        download_dir,
+                        link_url.split('/')[-1]
+                    )
+                    print(f'downloading {link_url.split('/')[-1]}...')
+                    urllib.request.urlretrieve(
+                        url=link_url,
+                        filename=file_name
+                    )
+                    # count += 1
+                    print(f'downloaded {link_url.split('/')[-1]}')
         return True
     else:
         print(f"Error: {response.status_code}")
@@ -155,7 +264,6 @@ def upload_blob(bucket_name, source_file_name, destination_blob_name):
     print(
         f"File {source_file_name} uploaded to bucket {bucket_name}"
     )
-
 
 # information
 # https://cloud.google.com/storage/docs/uploading-objects

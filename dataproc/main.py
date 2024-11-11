@@ -13,8 +13,9 @@ def main():
     region = "us-central1"
     cluster_name = "uber-hadoop-spark-cluster"
     gcs_bucket = "uber-pyspark-jobs"
-    spark_file_name = "warehouse_loader_v4.py"
-    # gs://uber-pyspark-jobs/warehouse_loader_v1.py
+    spark_file_name = "wh_batch_load.py"
+    # 2011 init - gs://uber-pyspark-jobs/wh_init.py
+    # batch - gs://uber-pyspark-jobs/wh_batch_load.py
 
     # Create cluster
     # create_cluster(
@@ -23,28 +24,30 @@ def main():
     #     cluster_name=cluster_name
     # )
 
-    # Submit PySpark Job
-    # submit_pyspark_job(
-    #     project_id=project_id,
-    #     region=region,
-    #     cluster_name=cluster_name,
-    #     gcs_bucket=gcs_bucket,
-    #     spark_filename=spark_file_name,
-    # )
+    # # Submit PySpark Job
+    for i in range(2015, 2025):
+        submit_pyspark_job(
+            project_id=project_id,
+            region=region,
+            cluster_name=cluster_name,
+            gcs_bucket=gcs_bucket,
+            spark_filename=spark_file_name,
+            args=[str(i)],
+        )
 
     # Stop cluster
-    stop_cluster(
-        project_id=project_id,
-        region=region,
-        cluster_name=cluster_name
-    )
+    # stop_cluster(
+    #     project_id=project_id,
+    #     region=region,
+    #     cluster_name=cluster_name
+    # )
 
-    # Delete cluster
-    delete_cluster(
-        project_id=project_id,
-        region=region,
-        cluster_name=cluster_name
-    )
+    # # Delete cluster
+    # delete_cluster(
+    #     project_id=project_id,
+    #     region=region,
+    #     cluster_name=cluster_name
+    # )
 
 
 if __name__ == "__main__":
