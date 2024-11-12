@@ -36,8 +36,10 @@
 
 - `dataproc`
     - `cluster.py` - functions to manage dataproc cluster (create, update, delete, start, stop, submit job)
-    - `main.py` - execution file
     - `jobs` - contains PySpark jobs
+        - `wh_init.py` - init data warehouse on Google BigQuery (year: 2011)
+        - `wh_batch_load.py` - batch processing each year from 2012 to present
+    - `main.py` - execution file
 
 - `bigquery`
 
@@ -50,6 +52,8 @@
 - Project ID: `uber-analysis-439804`
 - Region: `us-central1`
 - Dataproc's Cluster Name: `uber-hadoop-spark-cluster`
-- Bucket's Name: `uber-datalake`
+- Bucket's Name: 
+    - Raw data: `uber-{year}-154055`
+    - PySpark jobs and tmp dir: `uber-pyspark-jobs`
 
 > pip freeze > requirements.txt

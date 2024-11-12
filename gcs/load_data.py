@@ -144,14 +144,15 @@ def download_green_files():
         return False
 
 
-def upload_files(bucket_name, source_directory):
+def upload_files(source_directory):
     file_paths = []
     for root, _, files in os.walk(source_directory):
         for file in files:
             file_paths.append(os.path.join(root, file).replace("\\", "/"))
     for file_path in file_paths:
+        year = re.search(r'\d{4}', file_path).group()
         upload_blob(
-            bucket_name=bucket_name,
+            bucket_name=f"uber-{year}-154055",
             source_file_name=file_path,
             destination_blob_name=file_path.split('/')[-1]
         )

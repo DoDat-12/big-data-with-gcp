@@ -37,6 +37,7 @@ df = spark \
     .format("parquet") \
     .load(input_path) \
     .dropna() \
+    .filter(year(col("tpep_pickup_datetime")) == 2011) \
     .withColumn("trip_id", monotonically_increasing_id())
 df.printSchema()
 
