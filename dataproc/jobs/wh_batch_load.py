@@ -54,6 +54,7 @@ df = spark \
     .format("parquet") \
     .load(input_path) \
     .dropna() \
+    .filter(year(col("tpep_pickup_datetime")) == int(batch_year)) \
     .withColumn("trip_id", monotonically_increasing_id() + max_fact_id + 1)
 df.printSchema()
 
