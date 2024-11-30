@@ -1,6 +1,6 @@
 # Experimenting GCP for Big Data Project
 
-![alt text](docs/pipeline.png)
+![gcp](docs/gcp.png)
 
 ## Prerequisite
 
