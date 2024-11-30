@@ -62,12 +62,12 @@ dim_datetime = df \
     .select("tpep_pickup_datetime", "tpep_dropoff_datetime") \
     .distinct() \
     .withColumn("datetime_id", monotonically_increasing_id()) \
-    .withColumn("pick_hour", hour(col("tpep_pickup_datetime"))) \
+    .withColumn("pick_hour", hour(col("tpep_pickup_datetime")) + minute(col("tpep_pickup_datetime")) / 60.0) \
     .withColumn("pick_day", dayofmonth(col("tpep_pickup_datetime"))) \
     .withColumn("pick_month", month(col("tpep_pickup_datetime"))) \
     .withColumn("pick_year", year(col("tpep_pickup_datetime"))) \
     .withColumn("pick_weekday", dayofweek(col("tpep_pickup_datetime"))) \
-    .withColumn("drop_hour", hour(col("tpep_dropoff_datetime"))) \
+    .withColumn("drop_hour", hour(col("tpep_dropoff_datetime")) + minute(col("tpep_dropoff_datetime")) / 60.0) \
     .withColumn("drop_day", dayofmonth(col("tpep_dropoff_datetime"))) \
     .withColumn("drop_month", month(col("tpep_dropoff_datetime"))) \
     .withColumn("drop_year", year(col("tpep_dropoff_datetime"))) \
