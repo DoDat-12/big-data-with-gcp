@@ -42,6 +42,12 @@ def create_cluster(project_id, region, cluster_name):
             "gce_cluster_config": {
                 "internal_ip_only": False,
             },
+            "software_config": {
+                "optional_components": ["JUPYTER"],
+            },
+            "endpoint_config": {
+                "enable_http_port_access": True,
+            },
         },
     }
 

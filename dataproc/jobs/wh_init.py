@@ -1,18 +1,30 @@
+# Import
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 
+# Start Spark Session
 spark = SparkSession \
     .builder \
-    .appName("Batch Process Each Year") \
+    .appName("Warehouse Init Job") \
+    .config("spark.default.parallelism", "24") \
+    .config("spark.sql.shuffle.partitions", "24") \
     .getOrCreate()
 
-input_path = f"gs://uber-2011-154055"
-zone_lookup = "gs://uber-pyspark-jobs/taxi_zone_lookup.csv"
+# Path lists
+zone_lookup = "hdfs://10.128.0.59:8020/raw_data/taxi_zone_lookup.csv"
+input_path = "hdfs://10.128.0.59:8020/raw_data/2014"
+output_fact_trip = "hdfs://10.128.0.59:8020/data_warehouse/fact_trip"
+output_dim_vendor = "hdfs://10.128.0.59:8020/data_warehouse/dim_vendor"
+output_dim_datetime = "hdfs://10.128.0.59:8020/data_warehouse/dim_datetime"
+output_dim_rate_code = "hdfs://10.128.0.59:8020/data_warehouse/dim_rate_code"
+output_dim_pickup_location = "hdfs://10.128.0.59:8020/data_warehouse/dim_pickup_location"
+output_dim_dropoff_location = "hdfs://10.128.0.59:8020/data_warehouse/dim_dropoff_location"
+output_dim_payment = "hdfs://10.128.0.59:8020/data_warehouse/dim_payment"
 
-# raw schema
-schema = StructType([
+# Schema
+input_schema = StructType([
     StructField("VendorID", LongType(), True),
     StructField("tpep_pickup_datetime", TimestampNTZType(), True),
     StructField("tpep_dropoff_datetime", TimestampNTZType(), True),
@@ -31,16 +43,6 @@ schema = StructType([
     StructField("total_amount", DoubleType(), True)
 ])
 
-# raw dataframe
-df = spark \
-    .read \
-    .format("parquet") \
-    .load(input_path) \
-    .dropna() \
-    .filter(year(col("tpep_pickup_datetime")) == 2011) \
-    .withColumn("trip_id", monotonically_increasing_id())
-df.printSchema()
-
 lookup_schema = StructType([
     StructField("LocationID", IntegerType(), True),
     StructField("Borough", StringType(), True),
@@ -48,17 +50,28 @@ lookup_schema = StructType([
     StructField("service_zone", StringType(), True),
 ])
 
-df_lookup = spark \
-    .read \
-    .format("csv") \
+df_input = spark.read.format("parquet") \
+    .schema(input_schema) \
+    .load(input_path) \
+    .dropna() \
+    .filter((year(col("tpep_pickup_datetime")) == 2014) &
+            (col("trip_distance") > 0.0) &
+            (col("passenger_count") > 0)) \
+    .withColumn("trip_id", monotonically_increasing_id())
+
+df_lookup = spark.read.format("csv") \
     .schema(lookup_schema) \
     .option("header", True) \
     .load(zone_lookup) \
     .dropna()
-df_lookup.printSchema()
+
+# df_input.printSchema()
+# df_lookup.printSchema()
+# df_input.cache() - not enough RAM
+# df_input.show(5, truncate = False)
 
 # Datetime dimension
-dim_datetime = df \
+dim_datetime = df_input \
     .select("tpep_pickup_datetime", "tpep_dropoff_datetime") \
     .distinct() \
     .withColumn("datetime_id", monotonically_increasing_id()) \
@@ -66,12 +79,13 @@ dim_datetime = df \
     .withColumn("pick_day", dayofmonth(col("tpep_pickup_datetime"))) \
     .withColumn("pick_month", month(col("tpep_pickup_datetime"))) \
     .withColumn("pick_year", year(col("tpep_pickup_datetime"))) \
-    .withColumn("pick_weekday", dayofweek(col("tpep_pickup_datetime"))) \
+    .withColumn("pick_weekday", F.date_format(col("tpep_pickup_datetime"), "EEEE")) \
     .withColumn("drop_hour", hour(col("tpep_dropoff_datetime")) + minute(col("tpep_dropoff_datetime")) / 60.0) \
     .withColumn("drop_day", dayofmonth(col("tpep_dropoff_datetime"))) \
     .withColumn("drop_month", month(col("tpep_dropoff_datetime"))) \
     .withColumn("drop_year", year(col("tpep_dropoff_datetime"))) \
-    .withColumn("drop_weekday", dayofweek(col("tpep_dropoff_datetime")))
+    .withColumn("drop_weekday", F.date_format(col("tpep_pickup_datetime"), "EEEE"))
+
 
 # Rate code dimension
 rate_code_type = {
@@ -82,8 +96,9 @@ rate_code_type = {
     5: "Negotiated fare",
     6: "Group ride",
 }
+
 # RatecodeID + rate_code_name
-dim_rate_code = df \
+dim_rate_code = df_input \
     .select("RatecodeID") \
     .distinct() \
     .withColumn("rate_code_name",
@@ -99,21 +114,19 @@ dim_rate_code = df \
 
 # Pickup location dimension
 # PULocationID + Borough + Zone + service_zone
-dim_pickup_location = df \
+dim_pickup_location = df_input \
     .select("PULocationID") \
     .distinct() \
-    .join(df_lookup, df.PULocationID == df_lookup.LocationID, "inner") \
+    .join(df_lookup, df_input.PULocationID == df_lookup.LocationID, "inner") \
     .select("PULocationID", "Borough", "Zone", "service_zone")
 
 # Dropoff location dimension
 # DOLocationID + Borough + Zone + service_zone
-dim_dropoff_location = df \
+dim_dropoff_location = df_input \
     .select("DOLocationID") \
     .distinct() \
-    .join(df_lookup, df.DOLocationID == df_lookup.LocationID, "inner") \
+    .join(df_lookup, df_input.DOLocationID == df_lookup.LocationID, "inner") \
     .select("DOLocationID", "Borough", "Zone", "service_zone")
-
-# dim_dropoff_location.show(5)
 
 # Payment type dim
 payment_type_name = {
@@ -125,7 +138,7 @@ payment_type_name = {
     6: "Voided trip",
 }
 # payment_type + payment_type_name
-dim_payment = df \
+dim_payment = df_input \
     .select("payment_type") \
     .distinct() \
     .withColumn("payment_type_name",
@@ -145,7 +158,7 @@ vendor_name = {
     2: "VeriFone Inc",
 }
 # VendorID + vendor_name
-dim_vendor = df \
+dim_vendor = df_input \
     .select("VendorID") \
     .distinct() \
     .withColumn("vendor_name",
@@ -156,14 +169,13 @@ dim_vendor = df \
     .dropna()
 
 # Fact table
-fact_trip = df.alias("fact_data") \
-    .join(dim_vendor.alias("dim_vendor"), col("fact_data.VendorID") == col("dim_vendor.VendorID"), "inner") \
-    .join(dim_datetime.alias("dim_datetime"), (col("fact_data.tpep_pickup_datetime") == col("dim_datetime.tpep_pickup_datetime")) & (
-        col("fact_data.tpep_dropoff_datetime") == col("dim_datetime.tpep_dropoff_datetime")), "inner") \
+fact_trip = df_input.alias("fact_data") \
+    .join(dim_datetime.alias("dim_datetime"), (col("fact_data.tpep_pickup_datetime") == col("dim_datetime.tpep_pickup_datetime")) & (col("fact_data.tpep_dropoff_datetime") == col("dim_datetime.tpep_dropoff_datetime")), "inner") \
     .join(dim_pickup_location.alias("dim_pickup_location"), col("fact_data.PULocationID") == col("dim_pickup_location.PULocationID"), "inner") \
     .join(dim_dropoff_location.alias("dim_dropoff_location"), col("fact_data.DOLocationID") == col("dim_dropoff_location.DOLocationID"), "inner") \
-    .join(dim_rate_code.alias("dim_ratecode"), col("fact_data.RatecodeID") == col("dim_ratecode.RatecodeID"), "inner") \
-    .join(dim_payment.alias("dim_payment"), col("fact_data.payment_type") == col("dim_payment.payment_type"), "inner") \
+    .join(broadcast(dim_vendor.alias("dim_vendor")), col("fact_data.VendorID") == col("dim_vendor.VendorID"), "inner") \
+    .join(broadcast(dim_rate_code.alias("dim_ratecode")), col("fact_data.RatecodeID") == col("dim_ratecode.RatecodeID"), "inner") \
+    .join(broadcast(dim_payment.alias("dim_payment")), col("fact_data.payment_type") == col("dim_payment.payment_type"), "inner") \
     .select(
         col("fact_data.trip_id"),
         col("dim_vendor.VendorID").alias("vendor_id"),
@@ -186,54 +198,68 @@ fact_trip = df.alias("fact_data") \
         # df.improvement_surcharge,
 )
 
+# Write to HDFS
+# fact_trip_partitioned = fact_trip.coalesce(24)
 
-# fact_trip.show(5)
+fact_trip.repartition(24, "trip_id") \
+    .write \
+    .bucketBy(24, "trip_id") \
+    .sortBy("trip_id") \
+    .format("parquet") \
+    .option("path", output_fact_trip) \
+    .mode("overwrite") \
+    .saveAsTable("fact_trip")
 
-dim_vendor.write.format('bigquery') \
-    .option('table', 'uber-analysis-439804.uber_warehouse.dim_vendor') \
-    .option("temporaryGcsBucket", "uber-pyspark-jobs/temp") \
+# SCD Type II
+# dim_datetime_partitioned = dim_datetime.coalesce(24)
+dim_datetime.write \
+    .partitionBy("pick_year") \
+    .format("parquet") \
+    .option("path", output_dim_datetime) \
     .mode("overwrite") \
     .save()
 
-dim_datetime.write.format('bigquery') \
-    .option('table', 'uber-analysis-439804.uber_warehouse.dim_datetime') \
-    .option("temporaryGcsBucket", "uber-pyspark-jobs/temp") \
+# SCD Type I
+dim_vendor.write \
+    .partitionBy("VendorID") \
+    .format("parquet") \
+    .option("path", output_dim_vendor) \
     .mode("overwrite") \
     .save()
 
-dim_rate_code.write.format('bigquery') \
-    .option('table', 'uber-analysis-439804.uber_warehouse.dim_rate_code') \
-    .option("temporaryGcsBucket", "uber-pyspark-jobs/temp") \
+# SCD Type I
+dim_rate_code.write \
+    .partitionBy("RatecodeID") \
+    .format("parquet") \
+    .option("path", output_dim_rate_code) \
     .mode("overwrite") \
     .save()
 
-dim_pickup_location.write.format('bigquery') \
-    .option('table', 'uber-analysis-439804.uber_warehouse.dim_pickup_location') \
-    .option("temporaryGcsBucket", "uber-pyspark-jobs/temp") \
+# SCD Type II
+# pickup = dim_pickup_location.coalesce(12)
+
+dim_pickup_location.write \
+    .partitionBy("service_zone") \
+    .format("parquet") \
+    .option("path", output_dim_pickup_location) \
     .mode("overwrite") \
     .save()
 
-dim_dropoff_location.write.format('bigquery') \
-    .option('table', 'uber-analysis-439804.uber_warehouse.dim_dropoff_location') \
-    .option("temporaryGcsBucket", "uber-pyspark-jobs/temp") \
+# SCD Type II
+# dropoff = dim_dropoff_location.coalesce(12)
+
+dim_dropoff_location.write \
+    .partitionBy("service_zone") \
+    .format("parquet") \
+    .option("path", output_dim_dropoff_location) \
     .mode("overwrite") \
     .save()
 
-dim_payment.write.format('bigquery') \
-    .option('table', 'uber-analysis-439804.uber_warehouse.dim_payment') \
-    .option("temporaryGcsBucket", "uber-pyspark-jobs/temp") \
-    .mode("overwrite") \
-    .save()
-
-fact_trip.write.format('bigquery') \
-    .option('table', 'uber-analysis-439804.uber_warehouse.fact_trip') \
-    .option("temporaryGcsBucket", "uber-pyspark-jobs/temp") \
-    .mode("overwrite") \
-    .save()
-
-df_lookup.write.format('bigquery') \
-    .option('table', 'uber-analysis-439804.uber_warehouse.lookup_location') \
-    .option("temporaryGcsBucket", "uber-pyspark-jobs/temp") \
+# SCD Type I
+dim_payment.write \
+    .partitionBy("payment_type") \
+    .format("parquet") \
+    .option("path", output_dim_payment) \
     .mode("overwrite") \
     .save()
 

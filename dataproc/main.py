@@ -8,11 +8,11 @@ from cluster import (
 
 
 def main():
-    # TODO: 12-11-2024 - run this overnight
+    # TODO: 12-11-2024 - run this overnight - done
     # Cluster & job information
     project_id = "uber-analysis-439804"
     region = "us-central1"
-    cluster_name = "uber-hadoop-spark-cluster"
+    cluster_name = "uber-proc"
     gcs_bucket = "uber-pyspark-jobs"
 
     # 2011 init - gs://uber-pyspark-jobs/wh_init.py
@@ -21,11 +21,11 @@ def main():
     load_wh = "wh_batch_load.py"
 
     # Create cluster
-    create_cluster(
-        project_id=project_id,
-        region=region,
-        cluster_name=cluster_name,
-    )
+    # create_cluster(
+    #     project_id=project_id,
+    #     region=region,
+    #     cluster_name=cluster_name,
+    # )
 
     # Submit init dw job
     submit_pyspark_job(
@@ -37,7 +37,7 @@ def main():
     )
 
     # Submit batch processing job
-    for i in range(2012, 2025):
+    for i in range(2014, 2025):
         submit_pyspark_job(
             project_id=project_id,
             region=region,
@@ -48,18 +48,18 @@ def main():
         )
 
     # Stop cluster
-    stop_cluster(
-        project_id=project_id,
-        region=region,
-        cluster_name=cluster_name
-    )
+    # stop_cluster(
+    #     project_id=project_id,
+    #     region=region,
+    #     cluster_name=cluster_name
+    # )
 
     # # Delete cluster
-    delete_cluster(
-        project_id=project_id,
-        region=region,
-        cluster_name=cluster_name
-    )
+    # delete_cluster(
+    #     project_id=project_id,
+    #     region=region,
+    #     cluster_name=cluster_name
+    # )
 
 
 if __name__ == "__main__":
