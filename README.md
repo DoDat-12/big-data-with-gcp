@@ -18,15 +18,15 @@ This project focuses on the batch processing and analysis of New York TLC (Taxi 
 
 The system uses batch processing for comprehansice data analysis
 
-![gcp](docs/gcp.png)
+![data-pipeline](docs/pipeline.png)
 
 Dataproc cluter architecture
 
-
+![dataproc-cluster](docs/dataproc-cluster.png)
 
 ## Data Warehouse Schema
 
-![](docs/schema.png)
+![warehouse-schema](docs/schema.png)
 
 ## Project Structure
 
