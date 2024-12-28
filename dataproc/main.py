@@ -1,6 +1,6 @@
 from cluster import (
-    create_cluster,
-    delete_cluster,
+    # create_cluster,
+    # delete_cluster,
     stop_cluster,
     start_cluster,
     submit_pyspark_job,
@@ -27,6 +27,12 @@ def main():
     #     cluster_name=cluster_name,
     # )
 
+    start_cluster(
+        project_id=project_id,
+        region=region,
+        cluster_name=cluster_name
+    )
+
     # Submit init dw job
     submit_pyspark_job(
         project_id=project_id,
@@ -37,7 +43,7 @@ def main():
     )
 
     # Submit batch processing job
-    for i in range(2014, 2025):
+    for i in range(2015, 2025):
         submit_pyspark_job(
             project_id=project_id,
             region=region,
@@ -48,13 +54,13 @@ def main():
         )
 
     # Stop cluster
-    # stop_cluster(
-    #     project_id=project_id,
-    #     region=region,
-    #     cluster_name=cluster_name
-    # )
+    stop_cluster(
+        project_id=project_id,
+        region=region,
+        cluster_name=cluster_name
+    )
 
-    # # Delete cluster
+    # Delete cluster
     # delete_cluster(
     #     project_id=project_id,
     #     region=region,

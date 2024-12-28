@@ -1,31 +1,32 @@
-# Experimenting GCP for Big Data Project
+# TLC Trip Record Data Processing with Google Cloud Platform
+
+## Introduction
+
+This project focuses on the batch processing and analysis of New York TLC (Taxi & Limousine Commission) Trip Record Data using Big Data technologies from Google Cloud Platform. It aims to provide deep insights and timely information on public transportation usage trends as well as factors affecting travel costs in New York.
+
+## Technologies Used
+
+- Google Cloud Storage: Intermediate storage for storing raw data sent from local
+- Google Dataproc: Managed service for running Apache Spark, Apache Hadoop
+    - Spark SQL: For data processing and analysis
+    - Spark MLlib: For machine learning tasks
+    - Hadoop HDFS: Data Warehouse Storage
+- Google BigQuery & Looker Studio: For visualization
+- Apache Airflor: For workflow orchestration
+
+## System Architecture
+
+The system uses batch processing for comprehansice data analysis
 
 ![gcp](docs/gcp.png)
 
-## Prerequisite
+Dataproc cluter architecture
 
-- Account with Google Cloud Platform, Billing enabled (Skip)
-- Create service Account with owner access (Skip)
-  - id: `tadod-sa-434`
-  - Go to manage keys and create `serviceKeyGoogle.json` key, store in this directory  (put in .gitignore)
-- Enable APIs (Skip)
-  - Compute Engine API
-  - Cloud Dataproc API
-  - Cloud Resource Manager API
-- Set up virtual environment
 
-        py -m venv env
-        ./env/Scripts/activate
 
-- Python libraries
+## Data Warehouse Schema
 
-        pip install -r requirements.txt
-
-- Create Service Account with owner role, create key and save with name `serviceKeyGoogle.json`
-
-- Test run
-
-        py setup_test.py
+![](docs/schema.png)
 
 ## Project Structure
 
@@ -36,12 +37,8 @@
 
 - `dataproc`
   - `cluster.py` - functions to manage dataproc cluster (create, update, delete, start, stop, submit job)
-  - `jobs` - contains PySpark jobs
-    - `wh_init.py` - init data warehouse on Google BigQuery (year: 2011)
-    - `wh_batch_load.py` - batch processing each year from 2012 to present
+  - `jobs` & `notebooks` - contains PySpark jobs and notebooks for processing data
   - `main.py` - execution file
-
-- `bigquery`
 
 - `docs` - files for README.md
 - `setup_test.py` - check authen from local to GCP
@@ -56,8 +53,26 @@
   - Raw data: `uber-{year}-154055`
   - PySpark jobs and tmp dir: `uber-pyspark-jobs`
 
-> pip freeze > requirements.txt
+## Installation and Setup
 
-## Data Schema
+### Prerequisite
+- Account with Google Cloud Platform, Billing enabled
 
-![](docs/schema.png)
+### Setup GCP Python API
+- Create service Account with owner role. Go to manage keys and create `serviceKeyGoogle.json` key, store in this directory  (put in .gitignore)
+- Enable APIs
+  - Compute Engine API
+  - Cloud Dataproc API
+  - Cloud Resource Manager API
+- Set up virtual environment
+
+        py -m venv env
+        ./env/Scripts/activate
+
+- Install Python libraries
+
+        pip install -r requirements.txt
+
+- Test run
+
+        py setup_test.py

@@ -1,1 +1,1 @@
-## Store data upload from local, then move into Dataproc Cluster
+## Store data upload from local, then move into Google Cloud Storage

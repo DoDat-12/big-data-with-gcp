@@ -29,21 +29,21 @@ def create_cluster(project_id, region, cluster_name):
         "project_id": project_id,
         "cluster_name": cluster_name,
         "config": {
-            "master_config": {
+            "master_config": {  # 1 master node
                 "num_instances": 1,
                 "machine_type_uri": "n2-standard-2",
-                "disk_config": {"boot_disk_size_gb": 50},
+                "disk_config": {"boot_disk_size_gb": 100},
             },
-            "worker_config": {
-                "num_instances": 2,
+            "worker_config": {  # 3 worker nodes
+                "num_instances": 3,
                 "machine_type_uri": "n2-standard-2",
-                "disk_config": {"boot_disk_size_gb": 50},
+                "disk_config": {"boot_disk_size_gb": 100},
             },
             "gce_cluster_config": {
                 "internal_ip_only": False,
             },
             "software_config": {
-                "optional_components": ["JUPYTER"],
+                "optional_components": ["JUPYTER"],  # enable Jupyter notebook
             },
             "endpoint_config": {
                 "enable_http_port_access": True,
