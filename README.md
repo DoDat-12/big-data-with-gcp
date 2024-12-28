@@ -10,7 +10,7 @@ This project focuses on the batch processing and analysis of New York TLC (Taxi 
 - Google Dataproc: Managed service for running Apache Spark, Apache Hadoop
     - Spark SQL: For data processing and analysis
     - Spark MLlib: For machine learning tasks
-    - Hadoop HDFS: Data Warehouse Storage
+    - Hadoop HDFS: Data Warehouse & Raw Storage
 - Google BigQuery & Looker Studio: For visualization
 - Apache Airflor: For workflow orchestration
 
