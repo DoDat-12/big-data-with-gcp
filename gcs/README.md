@@ -1,1 +1,1 @@
-## Store data upload from local, then move into Google Cloud Storage
+## Crawling data and load into Cloud Storage

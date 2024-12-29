@@ -58,7 +58,7 @@ Dataproc cluter architecture
 ### Prerequisite
 - Account with Google Cloud Platform, Billing enabled
 
-### Setup GCP Python API
+### Setup GCP Python API for Initialization
 - Create service Account with owner role. Go to manage keys and create `serviceKeyGoogle.json` key, store in this directory  (put in .gitignore)
 - Enable APIs
   - Compute Engine API
@@ -76,3 +76,7 @@ Dataproc cluter architecture
 - Test run
 
         py setup_test.py
+
+### Setup Airflow for Monthly Processing
+
+See details here: [Airflow Quick Setup](airflow/README.md)
