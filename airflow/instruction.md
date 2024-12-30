@@ -14,9 +14,10 @@ Make sure to store your `serviceKeyGoogle.json` in `credentials` directory
 
 Spin the Container
 
-    docker compose up airflow-init
     docker compose up -d
 
-Username: `airflow`
-Password: `airflow`
-Webserver: `localhost:8081`
+- Username: `airflow`
+- Password: `airflow`
+- Webserver: `localhost:8081`
+
+![airflow-dag](../docs/airflow-dag.png)
