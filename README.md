@@ -30,6 +30,8 @@ Dataproc cluter architecture
 
 ## Project Structure
 
+- `airflow` - docker files and jobs for monthly crawling and processing data
+
 - `gcs`
   - `bucket.py` - function to create bucket on Google Cloud Storage
   - `load_data.py` - functions to download data and upload to bucket on GCS
@@ -44,22 +46,13 @@ Dataproc cluter architecture
 - `setup_test.py` - check authen from local to GCP
 - `serviceKeyGoogle.json` - Service Account key for authentication
 
-## Project Infomation
-
-- Project ID: `uber-analysis-439804`
-- Region: `us-central1`
-- Dataproc's Cluster Name: `uber-hadoop-spark-cluster`
-- Bucket's Name:
-  - Raw data: `uber-{year}-154055`
-  - PySpark jobs and tmp dir: `uber-pyspark-jobs`
-
 ## Installation and Setup
 
 ### Prerequisite
 - Account with Google Cloud Platform, Billing enabled
 
 ### Setup GCP Python API for Initialization
-- Create service Account with owner role. Go to manage keys and create `serviceKeyGoogle.json` key, store in this directory  (put in .gitignore)
+- Create Service Account with owner role. Go to manage keys and create `serviceKeyGoogle.json` key, store in this directory  (put in .gitignore)
 - Enable APIs
   - Compute Engine API
   - Cloud Dataproc API
@@ -73,10 +66,6 @@ Dataproc cluter architecture
 
         pip install -r requirements.txt
 
-- Test run
-
-        py setup_test.py
-
 ### Setup Airflow for Monthly Processing
 
-See details here: [Airflow Quick Setup](airflow/README.md)
+See details here: [Airflow Quick Setup](airflow/instruction.md)

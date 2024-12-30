@@ -36,3 +36,4 @@ six==1.16.0
 soupsieve==2.6
 tzdata==2024.2
 urllib3==2.2.3
+apache-airflow-providers-google==12.0.0

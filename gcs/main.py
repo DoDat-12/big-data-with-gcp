@@ -34,7 +34,7 @@ def main():
     #         source_directory="./yellow"
     #     )
 
-    create_bucket_class_location(bucket_name="uber-warehouse-154055")
+    create_bucket_class_location(bucket_name="new-data-154055")
 
 
 if __name__ == "__main__":
