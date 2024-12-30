@@ -10,8 +10,6 @@ batch_year = sys.argv[1]
 spark = SparkSession \
     .builder \
     .appName(f"Batch $batch_year") \
-    .config("spark.default.parallelism", "24") \
-    .config("spark.sql.shuffle.partitions", "24") \
     .getOrCreate()
 
 # Path lists
@@ -19,12 +17,9 @@ zone_lookup = "hdfs://10.128.0.59:8020/raw_data/taxi_zone_lookup.csv"
 input_path = "hdfs://10.128.0.59:8020/raw_data/{}".format(batch_year)
 
 output_fact_trip = "hdfs://10.128.0.59:8020/data_warehouse/fact_trip"
-output_dim_vendor = "hdfs://10.128.0.59:8020/data_warehouse/dim_vendor"
 output_dim_datetime = "hdfs://10.128.0.59:8020/data_warehouse/dim_datetime"
-output_dim_rate_code = "hdfs://10.128.0.59:8020/data_warehouse/dim_rate_code"
 output_dim_pickup_location = "hdfs://10.128.0.59:8020/data_warehouse/dim_pickup_location"
 output_dim_dropoff_location = "hdfs://10.128.0.59:8020/data_warehouse/dim_dropoff_location"
-output_dim_payment = "hdfs://10.128.0.59:8020/data_warehouse/dim_payment"
 
 # Schema
 input_schema = StructType([
@@ -53,7 +48,7 @@ lookup_schema = StructType([
     StructField("service_zone", StringType(), True),
 ])
 
-# Get last ID
+# Get last ID from fact_trip and dim_datetime
 df_prev_fact = spark.read.format("parquet") \
     .option("path", output_fact_trip) \
     .load() \
@@ -66,6 +61,7 @@ df_prev_datetime = spark.read.format("parquet") \
     .select("datetime_id")
 max_datetime_id = df_prev_datetime.agg({"datetime_id": "max"}).collect()[0][0]
 
+# Load new data
 df_input = spark.read.format("parquet") \
     .schema(input_schema) \
     .load(input_path) \
@@ -83,16 +79,7 @@ df_lookup = spark.read.format("csv") \
     .dropna()
 df_lookup.printSchema()
 
-# SCD Type I
-dim_vendor = spark.read.format("parquet") \
-    .load(output_dim_vendor)
-
-dim_rate_code = spark.read.format("parquet") \
-    .load(output_dim_rate_code)
-
-dim_payment = spark.read.format("parquet") \
-    .load(output_dim_payment)
-
+# Processing Output
 # Datetime dimension
 dim_datetime = df_input \
     .select("tpep_pickup_datetime", "tpep_dropoff_datetime") \
@@ -103,11 +90,13 @@ dim_datetime = df_input \
     .withColumn("pick_month", month(col("tpep_pickup_datetime"))) \
     .withColumn("pick_year", year(col("tpep_pickup_datetime"))) \
     .withColumn("pick_weekday", F.date_format(col("tpep_pickup_datetime"), "EEEE")) \
+    .withColumn("pick_weekday_id", dayofweek(col("tpep_pickup_datetime"))) \
     .withColumn("drop_hour", hour(col("tpep_dropoff_datetime")) + minute(col("tpep_dropoff_datetime")) / 60.0) \
     .withColumn("drop_day", dayofmonth(col("tpep_dropoff_datetime"))) \
     .withColumn("drop_month", month(col("tpep_dropoff_datetime"))) \
     .withColumn("drop_year", year(col("tpep_dropoff_datetime"))) \
-    .withColumn("drop_weekday", F.date_format(col("tpep_pickup_datetime"), "EEEE"))
+    .withColumn("drop_weekday", F.date_format(col("tpep_pickup_datetime"), "EEEE")) \
+    .withColumn("drop_weekday_id", dayofweek(col("tpep_dropoff_datetime")))
 
 # Pickup location dimension
 # PULocationID + Borough + Zone + service_zone
@@ -115,7 +104,7 @@ dim_pickup_location = df_input \
     .select("PULocationID") \
     .distinct() \
     .join(df_lookup, df_input.PULocationID == df_lookup.LocationID, "inner") \
-    .select("PULocationID", "Borough", "Zone", "service_zone")
+    .select("PULocationID", "X", "Y", "zone", "borough", "service_zone")
 
 # Dropoff location dimension
 # DOLocationID + Borough + Zone + service_zone
@@ -123,24 +112,19 @@ dim_dropoff_location = df_input \
     .select("DOLocationID") \
     .distinct() \
     .join(df_lookup, df_input.DOLocationID == df_lookup.LocationID, "inner") \
-    .select("DOLocationID", "Borough", "Zone", "service_zone")
+    .select("DOLocationID", "X", "Y", "zone", "borough", "service_zone")
 
 # Fact table
 fact_trip = df_input.alias("fact_data") \
     .join(dim_datetime.alias("dim_datetime"), (col("fact_data.tpep_pickup_datetime") == col("dim_datetime.tpep_pickup_datetime")) & (col("fact_data.tpep_dropoff_datetime") == col("dim_datetime.tpep_dropoff_datetime")), "inner") \
-    .join(dim_pickup_location.alias("dim_pickup_location"), col("fact_data.PULocationID") == col("dim_pickup_location.PULocationID"), "inner") \
-    .join(dim_dropoff_location.alias("dim_dropoff_location"), col("fact_data.DOLocationID") == col("dim_dropoff_location.DOLocationID"), "inner") \
-    .join(broadcast(dim_vendor.alias("dim_vendor")), col("fact_data.VendorID") == col("dim_vendor.VendorID"), "inner") \
-    .join(broadcast(dim_rate_code.alias("dim_ratecode")), col("fact_data.RatecodeID") == col("dim_ratecode.RatecodeID"), "inner") \
-    .join(broadcast(dim_payment.alias("dim_payment")), col("fact_data.payment_type") == col("dim_payment.payment_type"), "inner") \
     .select(
         col("fact_data.trip_id"),
-        col("dim_vendor.VendorID").alias("vendor_id"),
+        col("fact_data.VendorID").alias("vendor_id"),
         col("dim_datetime.datetime_id").alias("datetimestamp_id"),
-        col("dim_pickup_location.PULocationID").alias("pu_location_id"),
-        col("dim_dropoff_location.DOLocationID").alias("do_location_id"),
-        col("dim_ratecode.RatecodeID").alias("ratecode_id"),
-        col("dim_payment.payment_type").alias("payment_id"),
+        col("fact_data.PULocationID").alias("pu_location_id"),
+        col("fact_data.DOLocationID").alias("do_location_id"),
+        col("fact_data.RatecodeID").alias("ratecode_id").cast("long"),
+        col("fact_data.payment_type").alias("payment_id").cast("long"),
         col("fact_data.passenger_count"),
         col("fact_data.trip_distance"),
         col("fact_data.fare_amount"),
@@ -149,14 +133,10 @@ fact_trip = df_input.alias("fact_data") \
         col("fact_data.tip_amount"),
         col("fact_data.tolls_amount"),
         col("fact_data.total_amount")
-        # delete cause of version conflict
-        # df.congestion_surcharge,
-        # df.Airport_fee,
-        # df.improvement_surcharge,
 )
 
-# fact_trip_partitioned = fact_trip.coalesce(6)
-
+# Append to HDFS
+# Fact Trip
 fact_trip.repartition(24, "trip_id") \
     .write \
     .bucketBy(24, "trip_id") \
@@ -166,8 +146,7 @@ fact_trip.repartition(24, "trip_id") \
     .mode("append") \
     .saveAsTable("fact_trip")
 
-# dim_datetime_partitioned = dim_datetime.coalesce(6)
-
+# Dim Datetime
 dim_datetime.write \
     .partitionBy("pick_year") \
     .format("parquet") \
@@ -175,6 +154,7 @@ dim_datetime.write \
     .mode("append") \
     .save()
 
+# Dim Pickup Location
 dim_prev_pu = spark.read.format("parquet") \
     .load(output_dim_pickup_location)
 dim_append_pu = dim_pickup_location.subtract(dim_prev_pu)
@@ -185,6 +165,7 @@ dim_append_pu.write \
     .mode("append") \
     .save()
 
+# Dim Dropoff Location
 dim_prev_do = spark.read.format("parquet") \
     .load(output_dim_dropoff_location)
 dim_append_do = dim_dropoff_location.subtract(dim_prev_do)
