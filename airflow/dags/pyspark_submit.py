@@ -39,6 +39,7 @@ def start_cluster(project_id, region, cluster_name, **kwargs):
             "region": region,
             "cluster_name": cluster_name,
         }
+        # timeout=None,
     )
     print(f"Starting cluster {cluster_name}...")
     operation.result()
@@ -145,6 +146,7 @@ def stop_cluster(project_id, region, cluster_name, **kwargs):
             "region": region,
             "cluster_name": cluster_name,
         }
+        # timeout=None,
     )
     print(f"Stopping cluster {cluster_name}...")
     operation.result()

@@ -50,18 +50,47 @@ loading_job_submit = PythonOperator(
     dag=dag
 )
 
-# analysis_job_submit = PythonOperator(
-#     task_id="running_analysis_job",
-#     python_callable=submit_pyspark_job,
-#     op_kwargs={
-#         "project_id": "uber-analysis-439804",
-#         "region": "us-central1",
-#         "cluster_name": "uber-proc",
-#         "gcs_bucket": "uber-pyspark-jobs",
-#         "spark_filename": "analyzer.py"
-#     },
-#     dag=dag
-# )
+year_analysis_job_submit = PythonOperator(
+    task_id="running_year_analysis_job",
+    python_callable=submit_pyspark_job,
+    op_kwargs={
+        "project_id": "uber-analysis-439804",
+        "region": "us-central1",
+        "cluster_name": "uber-proc",
+        "gcs_bucket": "uber-pyspark-jobs",
+        "spark_filename": "year_analyzer.py"
+    },
+    provide_context=True,
+    dag=dag
+)
+
+day_analysis_job_submit = PythonOperator(
+    task_id="running_day_analysis_job",
+    python_callable=submit_pyspark_job,
+    op_kwargs={
+        "project_id": "uber-analysis-439804",
+        "region": "us-central1",
+        "cluster_name": "uber-proc",
+        "gcs_bucket": "uber-pyspark-jobs",
+        "spark_filename": "day_analyzer.py"
+    },
+    provide_context=True,
+    dag=dag
+)
+
+hour_analysis_job_submit = PythonOperator(
+    task_id="running_hour_analysis_job",
+    python_callable=submit_pyspark_job,
+    op_kwargs={
+        "project_id": "uber-analysis-439804",
+        "region": "us-central1",
+        "cluster_name": "uber-proc",
+        "gcs_bucket": "uber-pyspark-jobs",
+        "spark_filename": "hour_analyzer.py"
+    },
+    provide_context=True,
+    dag=dag
+)
 
 stopping_cluster = PythonOperator(
     task_id="stop_cluster",
@@ -75,7 +104,7 @@ stopping_cluster = PythonOperator(
     dag=dag
 )
 
-crawler >> starting_cluster >> loading_job_submit >> stopping_cluster
+crawler >> starting_cluster >> loading_job_submit >> year_analysis_job_submit >> day_analysis_job_submit >> hour_analysis_job_submit >> stopping_cluster
 
 # project_id = "uber-analysis-439804"
 # region = "us-central1"
