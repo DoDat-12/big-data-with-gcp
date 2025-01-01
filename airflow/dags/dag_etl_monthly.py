@@ -1,15 +1,19 @@
 from airflow import DAG
 from airflow.utils.dates import days_ago
 from airflow.operators.python import PythonOperator
+from datetime import timedelta
 
 from crawler import crawl_new_data
 from pyspark_submit import start_cluster, submit_pyspark_job, stop_cluster
 
 dag = DAG(
-    dag_id="monthly_etl_job",
+    dag_id="monthly_crawl_and_load_job",
     default_args={
         "owner": "tadod",
-        "start_date": days_ago(1)
+        "start_date": days_ago(1),
+        "execution_timeout": timedelta(minutes=300),
+        "retries": 2,
+        "retry_delay": timedelta(minutes=5)
     },
     schedule_interval="@monthly"
 )
@@ -44,49 +48,8 @@ loading_job_submit = PythonOperator(
         "region": "us-central1",
         "cluster_name": "uber-proc",
         "gcs_bucket": "uber-pyspark-jobs",
-        "spark_filename": "loader.py"
-    },
-    provide_context=True,
-    dag=dag
-)
-
-year_analysis_job_submit = PythonOperator(
-    task_id="running_year_analysis_job",
-    python_callable=submit_pyspark_job,
-    op_kwargs={
-        "project_id": "uber-analysis-439804",
-        "region": "us-central1",
-        "cluster_name": "uber-proc",
-        "gcs_bucket": "uber-pyspark-jobs",
-        "spark_filename": "year_analyzer.py"
-    },
-    provide_context=True,
-    dag=dag
-)
-
-day_analysis_job_submit = PythonOperator(
-    task_id="running_day_analysis_job",
-    python_callable=submit_pyspark_job,
-    op_kwargs={
-        "project_id": "uber-analysis-439804",
-        "region": "us-central1",
-        "cluster_name": "uber-proc",
-        "gcs_bucket": "uber-pyspark-jobs",
-        "spark_filename": "day_analyzer.py"
-    },
-    provide_context=True,
-    dag=dag
-)
-
-hour_analysis_job_submit = PythonOperator(
-    task_id="running_hour_analysis_job",
-    python_callable=submit_pyspark_job,
-    op_kwargs={
-        "project_id": "uber-analysis-439804",
-        "region": "us-central1",
-        "cluster_name": "uber-proc",
-        "gcs_bucket": "uber-pyspark-jobs",
-        "spark_filename": "hour_analyzer.py"
+        "spark_filename": "loader.py",
+        "arg": [str(2024)]
     },
     provide_context=True,
     dag=dag
@@ -104,7 +67,7 @@ stopping_cluster = PythonOperator(
     dag=dag
 )
 
-crawler >> starting_cluster >> loading_job_submit >> year_analysis_job_submit >> day_analysis_job_submit >> hour_analysis_job_submit >> stopping_cluster
+crawler >> starting_cluster >> loading_job_submit >> stopping_cluster
 
 # project_id = "uber-analysis-439804"
 # region = "us-central1"

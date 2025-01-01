@@ -51,24 +51,10 @@ def download_yellow_files():
 def preprocess(file_path):
     try:
         df = pd.read_parquet(file_path)
-        columns = [
-            "VendorID",
-            "tpep_pickup_datetime",
-            "tpep_dropoff_datetime",
-            "passenger_count",
-            "trip_distance",
-            "RatecodeID",
-            "store_and_fwd_flag",
-            "PULocationID",
-            "DOLocationID",
-            "payment_type",
-            "fare_amount",
-            "extra",
-            "mta_tax",
-            "tip_amount",
-            "tolls_amount",
-            "total_amount",
-        ]
+        columns = ["VendorID", "tpep_pickup_datetime", "tpep_dropoff_datetime",
+                   "passenger_count", "trip_distance", "RatecodeID", "store_and_fwd_flag",
+                   "PULocationID", "DOLocationID", "payment_type", "fare_amount",
+                   "extra", "mta_tax", "tip_amount", "tolls_amount", "total_amount",]
 
         df_filtered = df[columns]
         df_filtered = df_filtered.dropna()
@@ -80,8 +66,7 @@ def preprocess(file_path):
             .astype("int64")
         df_filtered["trip_distance"] = df_filtered["trip_distance"] \
             .astype("float64")
-        df_filtered["RatecodeID"] = df_filtered["RatecodeID"] \
-            .astype("int64")
+        df_filtered["RatecodeID"] = df_filtered["RatecodeID"].astype("int64")
         df_filtered["PULocationID"] = df_filtered["PULocationID"] \
             .astype("int64")
         df_filtered["DOLocationID"] = df_filtered["DOLocationID"] \
@@ -90,12 +75,9 @@ def preprocess(file_path):
             .astype("int64")
         df_filtered["fare_amount"] = df_filtered["fare_amount"] \
             .astype("float64")
-        df_filtered["extra"] = df_filtered["extra"] \
-            .astype("float64")
-        df_filtered["mta_tax"] = df_filtered["mta_tax"] \
-            .astype("float64")
-        df_filtered["tip_amount"] = df_filtered["tip_amount"] \
-            .astype("float64")
+        df_filtered["extra"] = df_filtered["extra"].astype("float64")
+        df_filtered["mta_tax"] = df_filtered["mta_tax"].astype("float64")
+        df_filtered["tip_amount"] = df_filtered["tip_amount"].astype("float64")
         df_filtered["tolls_amount"] = df_filtered["tolls_amount"] \
             .astype("float64")
         df_filtered["total_amount"] = df_filtered["total_amount"] \

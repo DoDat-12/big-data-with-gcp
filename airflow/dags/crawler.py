@@ -47,7 +47,7 @@ def get_latest_date(bucket_name, **kwargs):
 
 def crawl_new_data(year, **kwargs):
     latest_month = get_latest_date(f"uber-{year}-154055")
-    os.makedirs("/yellow/", mode=0o777, exist_ok=True)
+    os.makedirs("/tmp/yellow/", mode=0o777, exist_ok=True)
 
     page_url = 'https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page'
     response = requests.get(page_url)
@@ -67,7 +67,7 @@ def crawl_new_data(year, **kwargs):
                     new_data_existed = True
 
                     file_name = os.path.join(
-                        "/yellow/", link_url.split("/")[-1])
+                        "/tmp/yellow/", link_url.split("/")[-1])
                     print(f"Downloading {link_url.split("/")[-1]}...")
                     urllib.request.urlretrieve(
                         url=link_url, filename=file_name)

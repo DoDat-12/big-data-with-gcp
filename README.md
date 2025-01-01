@@ -12,7 +12,7 @@ This project focuses on the batch processing and analysis of New York TLC (Taxi 
     - Spark MLlib: For machine learning tasks
     - Hadoop HDFS: Data Warehouse & Raw Storage
 - Google BigQuery & Looker Studio: For visualization
-- Apache Airflor: For workflow orchestration
+- Apache Airflow: For workflow orchestration
 
 ## System Architecture
 

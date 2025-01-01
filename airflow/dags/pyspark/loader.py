@@ -138,13 +138,6 @@ fact_trip = df_input.alias("fact_data") \
 )
 
 # Append to HDFS
-# Fact trip
-fact_trip.write \
-    .format("parquet") \
-    .option("path", output_fact_trip) \
-    .mode("append") \
-    .save()
-
 # Dim datetime
 dim_datetime.write \
     .partitionBy("pick_year", "pick_month") \
@@ -163,6 +156,8 @@ dim_append_pu.write \
     .option("path", output_dim_pickup_location) \
     .mode("append") \
     .save()
+dim_prev_pu.unpersist()
+dim_append_pu.unpersist()
 
 dim_prev_do = spark.read.format("parquet") \
     .load(output_dim_dropoff_location)
@@ -171,6 +166,15 @@ dim_append_do.write \
     .partitionBy("service_zone") \
     .format("parquet") \
     .option("path", output_dim_dropoff_location) \
+    .mode("append") \
+    .save()
+dim_prev_do.unpersist()
+dim_append_do.unpersist()
+
+# Fact trip
+fact_trip.write \
+    .format("parquet") \
+    .option("path", output_fact_trip) \
     .mode("append") \
     .save()
 

@@ -14,12 +14,12 @@ def start_cluster(project_id, region, cluster_name, **kwargs):
     """
 
     # For checking the result of the previous task in Airflow
-    ti = kwargs['ti']
-    pulled_value = ti.xcom_pull(task_ids="crawl_new_data")
+    # ti = kwargs['ti']
+    # pulled_value = ti.xcom_pull(task_ids="crawl_new_data")
 
-    if pulled_value:
-        print("No new data! No need to start cluster")
-        return False
+    # if not pulled_value:
+    #     print("No new data! No need to start cluster")
+    #     return False
 
     # Set up authentication
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/.google/credentials/serviceKeyGoogle.json"
@@ -46,7 +46,7 @@ def start_cluster(project_id, region, cluster_name, **kwargs):
     print(f"Cluster {cluster_name} started successully")
 
 
-def submit_pyspark_job(project_id, region, cluster_name, gcs_bucket, spark_filename, **kwargs):
+def submit_pyspark_job(project_id, region, cluster_name, gcs_bucket, spark_filename, arg=None, **kwargs):
     """Submit PySpark Job to cluster
     Args:
         project_id (str): Project ID that contains cluster.
@@ -57,12 +57,12 @@ def submit_pyspark_job(project_id, region, cluster_name, gcs_bucket, spark_filen
     """
 
     # For checking the result of the previous task in Airflow
-    ti = kwargs['ti']
-    pulled_value = ti.xcom_pull(task_ids="crawl_new_data")
+    # ti = kwargs['ti']
+    # pulled_value = ti.xcom_pull(task_ids="crawl_new_data")
 
-    if pulled_value:
-        print("No new data! No need to submit job")
-        return False
+    # if not pulled_value:
+    #     print("No new data! No need to submit job")
+    #     return False
 
     # Set up authentication
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/.google/credentials/serviceKeyGoogle.json"
@@ -80,7 +80,7 @@ def submit_pyspark_job(project_id, region, cluster_name, gcs_bucket, spark_filen
         "pyspark_job": {
             # Class PySparkJob (5.13.0)
             "main_python_file_uri": f"gs://{gcs_bucket}/{spark_filename}",
-            "args": None,  # No time limit
+            "args": arg,  # No time limit
         },
     }
 
@@ -121,12 +121,12 @@ def stop_cluster(project_id, region, cluster_name, **kwargs):
     """
 
     # For checking the result of the previous task in Airflow
-    ti = kwargs['ti']
-    pulled_value = ti.xcom_pull(task_ids="crawl_new_data")
+    # ti = kwargs['ti']
+    # pulled_value = ti.xcom_pull(task_ids="crawl_new_data")
 
-    if pulled_value:
-        print("No new data! No need to stop cluster")
-        return False
+    # if not pulled_value:
+    #     print("No new data! No need to stop cluster")
+    #     return False
 
     # Set up authentication
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/.google/credentials/serviceKeyGoogle.json"
